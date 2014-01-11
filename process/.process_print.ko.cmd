@@ -1,0 +1,1 @@
+cmd_/home/hurley/Program/process_print/process_print.ko := ld -r -m elf_i386 -T /usr/src/kernels/3.9.11-200.fc18.i686.PAE/scripts/module-common.lds --build-id  -o /home/hurley/Program/process_print/process_print.ko /home/hurley/Program/process_print/process_print.o /home/hurley/Program/process_print/process_print.mod.o

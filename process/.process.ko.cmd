@@ -1,0 +1,1 @@
+cmd_/home/hurley/Program/kernel/process/process.ko := ld -r -m elf_i386 -T /usr/src/kernels/3.11.4-101.fc18.i686/scripts/module-common.lds --build-id  -o /home/hurley/Program/kernel/process/process.ko /home/hurley/Program/kernel/process/process.o /home/hurley/Program/kernel/process/process.mod.o

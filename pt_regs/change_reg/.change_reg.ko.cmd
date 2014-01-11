@@ -1,0 +1,1 @@
+cmd_/home/hurley/Experiment/pt_regs/change_reg/change_reg.ko := ld -r -m elf_i386 -T /usr/src/kernels/3.11.7-100.fc18.i686.PAE/scripts/module-common.lds --build-id  -o /home/hurley/Experiment/pt_regs/change_reg/change_reg.ko /home/hurley/Experiment/pt_regs/change_reg/change_reg.o /home/hurley/Experiment/pt_regs/change_reg/change_reg.mod.o
