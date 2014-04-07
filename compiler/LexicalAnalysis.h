@@ -21,6 +21,8 @@
 
 #include "Types.h"
 
+#define READBUF_SIZE 4096
+
 /// 词法分析
 class LexicalAnalysis {
 public:
@@ -35,16 +37,25 @@ public:
 
 private:
 	/// 指针移动到下一个非空白字符
-	const char *skipBlank(const char *stream);
+	char *skipBlank(char *stream);
+
+	/// 判断当前状态
+	State analyseState(char *stream);
 
 	/// 解析一个Token
-	bool analyseToken(const char *stream);
+	char *analyseToken(char *stream, TokenNode &tokenNode);
 
-	/// 解析整数
-	int analyseInt(const char *stream);
+	/// 解析标识符
+	char *analyseIden(char *stream, TokenNode &tokenNode);
 
-	/// 解析浮点数
-	double analyseDouble(const char *stream);
+	/// 解析符号
+	char *analyseIterator(char *stream, TokenNode &tokenNode);
+	
+	/// 解析届符
+	char *analyseLimit(char *stream, TokenNode &tokenNode);
+
+	/// 解析数字
+	char *analyseNumber(char *stream, TokenNode &tokenNode);
 
 private:
 	std::list<TokenNode> tokens_stream_;

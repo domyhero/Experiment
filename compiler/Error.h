@@ -20,29 +20,21 @@
 /// 错误消息管理
 class ErrorReport {
 public:
-	ErrorReport() : error_code_(NO_ERROR)
-	{
-	}
-
-	~ErrorReport()
-	{
-	}
-
 	enum ErrorCode {
-		NO_ERROR 	      =  0,
-		FLOAT_ERROR_NUM       =	 1,
-		DOUBLE_ERROR_NUM      =	 2,
-		NOTE_ERROR_NUM 	      =	 3,
-		STRING_ERROR_NUM      =	 4,
-		CHARCONST_ERROR_NUM   =	 5,
-		CHAR_ERROR_NUM 	      =	 6,
-		LEFT_BRA_ERROR_NUM    =	 7,
-		RIGHT_BRA_ERROR_NUM   =	 8,
-		LEFT_INDEX_ERROR_NUM  =	 9,
-		RIGHT_INDEX_ERROR_NUM =	 10,
-		L_BOUNDER_ERROR_NUM   =	 11,
-		R_BOUNDER_ERROR_NUM   =	 12,
-		PRE_PROCESS_ERROR_NUM =  13,
+		NO_ERROR  	  =  0,
+		FLOAT_ERROR       =  1,
+		DOUBLE_ERROR      =  2,
+		NOTE_ERROR 	  =  3,
+		STRING_ERROR      =  4,
+		CHARCONST_ERROR   =  5,
+		CHAR_ERROR	  =  6,
+		LEFT_BRA_ERROR    =  7,
+		RIGHT_BRA_ERROR   =  8,
+		LEFT_INDEX_ERROR  =  9,
+		RIGHT_INDEX_ERROR =  10,
+		L_BOUNDER_ERROR   =  11,
+		R_BOUNDER_ERROR   =  12,
+		PRE_PROCESS_ERROR =  13,
 
 		ERROR_INDEX_MAX
 	};
@@ -63,6 +55,24 @@ public:
 			"\'}\'没有对应项",
 			"预处理错误" 
 	};
+
+	ErrorReport() : error_code_(NO_ERROR)
+	{
+	}
+
+	ErrorReport(ErrorCode errCode) : error_code_(NO_ERROR)
+	{
+		error_code_ = errCode;
+	}
+
+	~ErrorReport()
+	{
+	}
+
+	void setErrorCode(ErrorCode code)
+	{
+		error_code_ = code;
+	}
 
 	/// 返回错误代码
 	ErrorCode getErrorCode()

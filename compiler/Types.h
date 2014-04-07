@@ -19,6 +19,8 @@
 
 #include <string>
 
+
+/// Token 类型
 enum TokenType {
 	// 关键字
 	AUTO 	  =	1,
@@ -53,13 +55,21 @@ enum TokenType {
 	VOID 	  =	30,
 	VOLATILE  =	31,
 	WHILE 	  =	32,
+
+	// 用户标示符
+	USER_TYPE,
+
+	KEYWORD_INDEX_MAX,
 	
 	// 常量
-	INT_VAL    =	51, 	// 整形常量
-	CHAR_VAL   = 	52, 	// 字符常量
-	FLOAT_VAL  =	53, 	// 浮点数常量
-	STRING_VAL =	54, 	// 双精度浮点数常量
-	MACRO_VAL  =	55, 	// 宏常量
+	CHAR_VAL   = 	51, 	// 字符常量
+	UCHAR_VAL   = 	52, 	// 无符号字符常量
+	INT_VAL    =	53, 	// 整形常量
+	UINT_VAL    =	54, 	// 无符号整形常量
+	FLOAT_VAL  =	55, 	// 浮点数常量
+	DOUBLE_VAL =	56, 	// 双精度浮点数常量
+
+	NUMBER_INDEX_MAX,
 	
 	// 运算符
 	NOT 	   =	61, 	// !
@@ -96,6 +106,8 @@ enum TokenType {
 	COMPLETE_MOD 	    =	91, // %=
 	BYTE_OR             =	92, // |
 	
+	OPERATOR_INDEX_MAX,
+
 	// 限界符
 	LEFT_BRA 	=	100, // (
 	RIGHT_BRA 	=	101, // )
@@ -110,16 +122,17 @@ enum TokenType {
 	SEMI 		=	110, // ;
 	SIN_QUE 	=	111, // '
 	DOU_QUE 	=	112, // "
-	
-	NOTE1 		=	120, // /**/ 注释
-	NOTE2 		=	121  // // 注释
+
+	LIMIT_INDEX_MAX
 };
 
+
+/// Token 节点
 struct TokenNode
 {
 	std::string key;		// 实际名字
     	TokenType type;			// 类型码
-    	int line;			// 所在行数
+    	int line = 0;			// 所在行数
 
     	union value { 			// 值(可选域)
 		char cvalue;		// 字符型
@@ -130,8 +143,18 @@ struct TokenNode
 		unsigned int uivalue;
 		double dvalue; 		// 浮点
 		float  fvalue;
-    	};
+    	} value;
 	std::string strvalue; 		// 字符串类型的值
+};
+
+/// 词法分析状态
+enum State {
+	Begin,
+	Keyword,
+	Number,
+	Iterator,
+	Limit,
+	Error
 };
 
 #endif 	// TYPES_H_
