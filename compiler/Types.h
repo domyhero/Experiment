@@ -18,7 +18,7 @@
 #define TYPES_H_
 
 #include <string>
-
+#include <map>
 
 /// Token 类型
 enum TokenType {
@@ -57,15 +57,15 @@ enum TokenType {
 	WHILE 	  =	32,
 
 	// 用户标示符
-	USER_TYPE,
+	USER_WORD,
 
 	KEYWORD_INDEX_MAX,
 	
 	// 常量
 	CHAR_VAL   = 	51, 	// 字符常量
-	UCHAR_VAL   = 	52, 	// 无符号字符常量
+	UCHAR_VAL  = 	52, 	// 无符号字符常量
 	INT_VAL    =	53, 	// 整形常量
-	UINT_VAL    =	54, 	// 无符号整形常量
+	UINT_VAL   =	54, 	// 无符号整形常量
 	FLOAT_VAL  =	55, 	// 浮点数常量
 	DOUBLE_VAL =	56, 	// 双精度浮点数常量
 
@@ -115,9 +115,6 @@ enum TokenType {
 	RIGHT_INDEX 	=	103, // ]
 	L_BOUNDER 	=	104, // {
 	R_BOUNDER 	=	105, // }
-	POINTER 	=	106, // .
-	JING 		=	107, // #
-	UNDER_LINE 	=	108, // _
 	COMMA 		=	109, // ,
 	SEMI 		=	110, // ;
 	SIN_QUE 	=	111, // '
@@ -134,7 +131,7 @@ struct TokenNode
     	TokenType type;			// 类型码
     	int line = 0;			// 所在行数
 
-    	union value { 			// 值(可选域)
+    	union value { 				// 值(可选域)
 		char cvalue;		// 字符型
 		unsigned char ucvalue;
 		short svalue; 		// 短整型
@@ -144,17 +141,23 @@ struct TokenNode
 		double dvalue; 		// 浮点
 		float  fvalue;
     	} value;
-	std::string strvalue; 		// 字符串类型的值
+	std::string strvalue; 			// 字符串类型的值
 };
 
 /// 词法分析状态
 enum State {
 	Begin,
 	Keyword,
+	Userword,
 	Number,
 	Iterator,
 	Limit,
+	Blank,
+	Endline,
 	Error
 };
+
+/// 关键字 map
+extern std::map<std::string, TokenType> keywordMap;
 
 #endif 	// TYPES_H_

@@ -19,6 +19,7 @@
 
 #include <list>
 
+#include "Error.h"
 #include "Types.h"
 
 #define READBUF_SIZE 4096
@@ -39,6 +40,9 @@ private:
 	/// 指针移动到下一个非空白字符
 	char *skipBlank(char *stream);
 
+	/// 识别关键字
+	void analyseKeyWord(TokenNode &tokenNode);
+
 	/// 判断当前状态
 	State analyseState(char *stream);
 
@@ -51,14 +55,21 @@ private:
 	/// 解析符号
 	char *analyseIterator(char *stream, TokenNode &tokenNode);
 	
-	/// 解析届符
+	/// 解析界符
 	char *analyseLimit(char *stream, TokenNode &tokenNode);
 
 	/// 解析数字
 	char *analyseNumber(char *stream, TokenNode &tokenNode);
 
 private:
+	/// 当前处理的行号
+	int lineno_;
+
+	/// 符号流
 	std::list<TokenNode> tokens_stream_;
+
+	/// 错误流
+	std::list<ErrorReport> error_list_;
 };
 
 #endif 	// LEXICALANALYSIS_H_

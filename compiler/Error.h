@@ -69,9 +69,16 @@ public:
 	{
 	}
 
+	/// 设置错误代码
 	void setErrorCode(ErrorCode code)
 	{
 		error_code_ = code;
+	}
+
+	/// 设置错误行号
+	void setErrorLine(int error_line)
+	{
+		error_line_ = error_line;
 	}
 
 	/// 返回错误代码
@@ -86,8 +93,15 @@ public:
 		return ErrorReport::ErrorStrings[error_code_];
 	}
 
+	/// 返回错误行号
+	int getErrorLine()
+	{
+		return error_line_;
+	}
+
 private:
 	ErrorCode error_code_;
+	int error_line_;
 };
 
 #endif 	// ERROR_H_
