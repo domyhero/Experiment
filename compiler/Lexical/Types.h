@@ -125,13 +125,12 @@ enum TokenType {
 
 
 /// Token 节点
-struct TokenNode
-{
+struct TokenNode {
 	std::string key;		// 实际名字
     	TokenType type;			// 类型码
     	int line = 0;			// 所在行数
 
-    	union value { 				// 值(可选域)
+    	union value { 			// 值(可选域)
 		char cvalue;		// 字符型
 		unsigned char ucvalue;
 		short svalue; 		// 短整型
