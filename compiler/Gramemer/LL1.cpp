@@ -14,22 +14,41 @@
 // 
 // =====================================================================================
 
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <cassert>
 #include <stdexcept>
 
 #include "LL1.h"
 
-/// 从标准输入读取文法
+/// 从标准输入读取文法(约定大写字母为非终结符，其他为终结符)
 void LL1::input_grammer()
 {
 	std::string tmpstr;
+
 	while (std::cin >> tmpstr) {
 		input_grammer_.push_back(tmpstr);
 	}
 }
 
+/// 从文件读取文法(约定大写字母为非终结符，其他为终结符)
+void LL1::input_grammer_by_file(std::string filename)
+{
+	std::fstream file(filename);
+	std::string tmpstr;
+
+	if (!file.is_open()) {
+		throw std::runtime_error("文件打开错误，请确认文件存在!");
+	}
+
+	while (file >> tmpstr) {
+		input_grammer_.push_back(tmpstr);
+	}
+}
+
 /// 分析处理文法
-bool LL1::analyse_grammer()
+void LL1::analyse_grammer()
 {
 	dispose_left_recursion();
 	dispose_public_left_factor();
@@ -38,12 +57,10 @@ bool LL1::analyse_grammer()
 	analyse_first_follow_set();
 	
 	if (!isLL1()) {
-		return false;
+		throw std::runtime_error("当前处理文法不是LL1文法，无法继续处理!");
 	}
 
 	create_analysis_table();
-
-	return true;
 }
 
 /// 消除文法左递归
@@ -72,7 +89,9 @@ void LL1::analse_symbol()
 				continue;
 			}
 			if (is_terminal_symbol(ch)) {
-				terminal_set_.insert(ch);
+				if (ch != '^') {
+					terminal_set_.insert(ch);
+				}
 			} else {
 				nonterminal_set_.insert(ch);
 			}
@@ -101,8 +120,9 @@ void LL1::analyse_sentence()
 /// 分析和生成first集和follow集
 void LL1::analyse_first_follow_set()
 {
-	for (auto ch : nonterminal_set_) {
-		get_symbol_first(ch, first_map_[ch]);
+	/// follow集的计算需要依赖first集的数据，所以必须先求完first集合再求follow集
+	for (auto nonch : nonterminal_set_) {
+		get_symbol_first(nonch, first_map_[nonch]);
 	}
 
 	for (auto ch : nonterminal_set_) {
@@ -158,6 +178,13 @@ void LL1::get_symbol_follow(char ch, std::set<char> &follow_set)
 							follow_set.insert(ch);
 						}
 					}
+					// 判断之后终结符能否推出空
+					for (int j = i+1; j < sen.size(); ++j) {
+						if (is_terminal_symbol(sen[i]) || !is_to_empty(sen[i])) {
+							break;
+						}
+					}
+					get_symbol_follow(sen_pair.first, follow_set);
 				}
 			}
 			// 如果当前非终结符位于最后
@@ -186,23 +213,133 @@ bool LL1::is_to_empty(char ch)
 	return false;
 }
 
+// 求一个元素的候选首符集
+void LL1::get_symbol_select(char ch)
+{
+	// TODO
+}
 
 /// 判断是否为LL1文法
 bool LL1::isLL1()
 {
+	// TODO 1. 判断文法是否存在左递归
+	
+	// TODO 2. 判断文法除过开始符号的非终结符号之间first集合两两不相交
+
+	// TODO 3. 判断文法某个非终结符的select集(候选首符集)存在空时，该终结符的first集和follow集不相交
+	
 	return true;
 }
 
 /// 构建预测分析表
 void LL1::create_analysis_table()
 {
+	terminal_set_.insert('#');
 
+	// 遍历每一个非终结符，构造分析表
+	for (auto nonch : nonterminal_set_) {
+		auto idx = sentent_.find(nonch);
+		while (idx != sentent_.end() && idx->first == nonch) {
+			if (idx->second != "^") {
+				// 遍历first(nonch)，加入产生式
+				for (auto ch : first_map_[nonch]) {
+					if (ch != '^') {
+						analysis_table_[nonch][ch] = idx->second;
+					}
+				}
+			} else {
+				// 遍历follow(nonch)，加入产生式
+				for (auto ch: follow_map_[nonch]) {
+					if (ch != '^') {
+						analysis_table_[nonch][ch] = idx->second;
+					}
+				}
+			}
+			++idx;
+		}
+	}
+	
+	// 所有空位置为 "Err"
+	for (auto nonch : nonterminal_set_) {
+		for (auto ch : terminal_set_) {
+			if (analysis_table_[nonch].find(ch) == analysis_table_[nonch].end()) {
+				analysis_table_[nonch][ch] = "Err";
+			}
+		}
+	}
 }
 
 /// 分析一个句子是否符合本文法
 bool LL1::analyse_sentence(std::string sentence)
 {
-	return true;
+	#define BLANK "---------------------------------------------------------------"
+	
+	std::cout << BLANK << std::endl;
+	std::cout << std::left << std::setw(20) << " 步骤";
+	std::cout << std::left << std::setw(20) << "符号串";
+	std::cout << std::left << std::setw(20) << "输入串";
+	std::cout << std::left << std::setw(20) << "所用产生式" << std::endl;
+	std::cout << BLANK << std::endl;
+
+	int step = 0;
+	std::vector<char> symb_stack; 	// 需要打印中间过程，无奈只好用vector定义stack
+	symb_stack.push_back('#');
+	symb_stack.push_back('S');
+	
+	// 输入串添加#结尾
+	sentence += "#";
+
+	// 步骤 0
+	output_analyse_step(step++, symb_stack, sentence, std::string(""));
+
+	// 开始分析过程
+	while (symb_stack.size() > 1) {
+		char nonch = symb_stack.back();
+		if (nonch == sentence[0]) {
+			symb_stack.pop_back();
+			sentence.erase(0, 1);
+			output_analyse_step(step++, symb_stack, sentence, std::string(""));
+			continue;
+		}
+		// 取得当前非终结符symb_stack.bask()面临输入sentence[0]的产生式
+		std::string product = analysis_table_[nonch][sentence[0]];
+		if (product != "Err") {
+			symb_stack.pop_back();
+			if (product != "^") {
+				// 逆序压栈
+				for (int i = product.size()-1; i >= 0; --i) {
+					symb_stack.push_back(product[i]);
+				}
+			}
+			output_analyse_step(step++, symb_stack, sentence, std::string("") + nonch + " = " + product);
+		} else {
+			std::cout << "找不到 " << nonch << " 面临输入 " << sentence[0] 
+				<< " 时的对应产生式!\n" << BLANK << "\n" << std::endl;
+			return false;
+		}
+	}
+	
+	std::cout << BLANK << "\n" << std::endl;
+
+	if (symb_stack.size() == 1 && symb_stack[0] == '#' && sentence == "#") {
+		return true;
+	}
+
+	return false;
+	#undef BLANK
+}
+
+/// 打印分析的步骤
+void LL1::output_analyse_step(int step, std::vector<char> &symb_stack, std::string sentence, std::string product)
+{
+	std::cout << " " << std::left << std::setw(17) << step;
+	std::string str_stack;
+	for (auto ch : symb_stack) {
+		str_stack += ch;
+	}
+	std::cout << std::left << std::setw(17) << str_stack;
+	std::cout << std::left << std::setw(17) << sentence;
+	std::cout << std::left << std::setw(17) << product << std::endl;
 }
 
 /// 输出所有中间数据
@@ -240,8 +377,8 @@ void LL1::output_fixed_grammer()
 void LL1::output_all_symbol()
 {
 	std::cout << "非终结符: ";
-	for (auto &ch : nonterminal_set_) {
-		std::cout << ch << " ";
+	for (auto &nonch : nonterminal_set_) {
+		std::cout << nonch << " ";
 	}
 	std::cout << std::endl;
 	std::cout << "终结符: ";
@@ -255,10 +392,10 @@ void LL1::output_all_symbol()
 void LL1::output_all_sentence()
 {
 	std::cout << "非终结符推导式: " << std::endl;
-	for (auto ch : nonterminal_set_) {
-		auto idx = sentent_.find(ch);
+	for (auto nonch : nonterminal_set_) {
+		auto idx = sentent_.find(nonch);
 		assert(idx != sentent_.end());
-		while (idx != sentent_.end() && idx->first == ch) {
+		while (idx != sentent_.end() && idx->first == nonch) {
 			std::cout << idx->first << " = " << idx->second << std::endl;
 			++idx;
 		}
@@ -292,13 +429,40 @@ void LL1::output_frist_follow_set()
 
 /// 输出预测分析表
 void LL1::output_analusis_table()
-{
+{ 	
 	std::cout << "预测分析表:" << std::endl;
+	int blank_size = terminal_set_.size() * 12 + 8;
+
+	for (int i = 0; i < blank_size; ++i) {
+		std::cout << "-";
+	}
+	std::cout << std::endl << "     |    ";
+
+	for (auto ch : terminal_set_) {
+		std::cout << std::left << std::setw(12) << ch;
+	}
 	std::cout << std::endl;
+	for (int i = 0; i < blank_size; ++i) {
+		std::cout << "-";
+	}
+	std::cout << std::endl;
+
+	for (auto &nonmap : analysis_table_) {
+		std::cout << "  " << nonmap.first << "  |    "; 
+		for (auto ch : terminal_set_) {
+			std::cout << std::left << std::setw(12) 
+				<< std::string("") + nonmap.first + " = "  + nonmap.second[ch];
+		}
+		std::cout << std::endl;
+	}
+
+	for (int i = 0; i < blank_size; ++i) {
+		std::cout << "-";
+	}
+	std::cout << "\n" << std::endl;
 }
 
 /**
- *
  * 判断一个符号是终结符还是非终结符号
  * 返回 true 为终结符号，false 为非终结符
  */

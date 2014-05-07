@@ -21,7 +21,6 @@
 #include <string>
 #include <map>
 #include <set>
-#include <iostream>
 
 class LL1
 {
@@ -32,8 +31,11 @@ public:
 	/// 从标准输入读取文法(约定大写字母为非终结符，其他为终结符)
 	void input_grammer();
 
+	/// 从文件读取文法(约定大写字母为非终结符，其他为终结符)
+	void input_grammer_by_file(std::string filename);
+
 	/// 分析处理文法
-	bool analyse_grammer();
+	void analyse_grammer();
 
 	/// 分析一个句子是否符合本文法
 	bool analyse_sentence(std::string sentence);
@@ -84,25 +86,33 @@ private:
 	/// 分析某终结符是否能推出空
 	bool is_to_empty(char ch);
 
+	// 求一个元素的候选首符集
+	void get_symbol_select(char ch);
+
 	/// 判断是否为LL1文法
 	bool isLL1();
 
 	/// 构建预测分析表
 	void create_analysis_table();
+
+	/// 打印分析的步骤
+	void output_analyse_step(int, std::vector<char> &, std::string, std::string);
+
 	/**
 	 * 判断一个符号是终结符还是非终结符
 	 * 返回 true 为终结符，false 为非终结符
 	 */
 	inline bool is_terminal_symbol(char ch);
 	
-	std::vector<std::string> input_grammer_; 	// 保存原始的文法
-	std::vector<std::string> fixed_grammer_; 	// 修正后的文法
-	std::set<char> terminal_set_; 			// 终结符集合
-	std::set<char> nonterminal_set_; 		// 非终结符集合
-	std::multimap<char, std::string> sentent_; 	// 非终结符的产生式集
-	std::map<char, std::set<char>> first_map_; 	// 所有非终结符的first集
-	std::map<char, std::set<char>> follow_map_; 	// 所有非终结符second集
-	std::map<char, std::vector<int>> analysis_table_; // 预测分析表，int 为fixed_grammer中相应文法的下标
+	std::vector<std::string> input_grammer_; 	 // 保存原始的文法
+	std::vector<std::string> fixed_grammer_; 	 // 修正后的文法
+	std::set<char> terminal_set_; 			 // 终结符集合
+	std::set<char> nonterminal_set_; 		 // 非终结符集合
+	std::multimap<char, std::string> sentent_; 	 // 非终结符的产生式集
+	std::map<char, std::<char>> nonterminal_select_; // 非终结符的候选首符集
+	std::map<char, std::set<char>> first_map_; 	 // 所有非终结符的first集
+	std::map<char, std::set<char>> follow_map_; 	 // 所有非终结符follow集
+	std::map<char, std::map<char, std::string>> analysis_table_; 	// 预测分析表
 };
 
 #endif 	// LL1_H_
