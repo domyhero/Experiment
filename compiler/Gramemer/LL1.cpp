@@ -238,10 +238,17 @@ void LL1::isLL1()
 {
 	// 1. 判断文法是否存在左递归
 	for (auto &senpair : sentent_) {
-		for (auto ch : senpair.second) {
-			// 发现左递归则返回失败
-			if (senpair.first == ch) {
-				throw std::runtime_error("存在左递归，当前处理文法不是LL1文法，无法继续处理!");
+		if (senpair.first == senpair.second[0]) {
+			throw std::runtime_error("存在左递归，当前处理文法不是LL1文法，无法继续处理!");
+		}
+		for (int i = 0; i < senpair.second.size()-1; ++i) {
+			// 当前是非终结符且可以推出空集
+			if (is_terminal_symbol(senpair.second[i]) && is_to_empty(senpair.second[i])) {
+				if (senpair.first == senpair.second[i+1]) {
+					throw std::runtime_error("存在左递归，当前处理文法不是LL1文法，无法继续处理!");
+				}
+			} else {
+				break;
 			}
 		}
 	}
