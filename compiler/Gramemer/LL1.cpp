@@ -56,8 +56,10 @@ void LL1::analyse_grammer()
 	analyse_sentence();
 	analyse_first_follow_set();
 	
-	if (!isLL1()) {
-		throw std::runtime_error("当前处理文法不是LL1文法，无法继续处理!");
+	try {
+		isLL1();
+	} catch (std::runtime_error err) {
+		throw err;
 	}
 
 	create_analysis_table();
@@ -213,22 +215,77 @@ bool LL1::is_to_empty(char ch)
 	return false;
 }
 
-// 求一个元素的候选首符集
-void LL1::get_symbol_select(char ch)
+// 求非终结符的候选首符集
+void LL1::analyse_symbol_select()
 {
-	// TODO
+	for (auto ch : nonterminal_set_) {
+		auto idx = sentent_.find(ch);
+		while (idx != sentent_.end() && idx->first == ch) {
+			for (auto nonch : idx->second) {
+				if (!is_terminal_symbol(nonch)) {
+					for (auto c : first_map_[nonch]) {
+						nonterminal_select_[nonch].insert(c);
+					}
+				}
+			}
+			++idx;
+		}
+	}
 }
 
 /// 判断是否为LL1文法
-bool LL1::isLL1()
+void LL1::isLL1()
 {
-	// TODO 1. 判断文法是否存在左递归
+	// 1. 判断文法是否存在左递归
+	for (auto &senpair : sentent_) {
+		for (auto ch : senpair.second) {
+			// 发现左递归则返回失败
+			if (senpair.first == ch) {
+				throw std::runtime_error("存在左递归，当前处理文法不是LL1文法，无法继续处理!");
+			}
+		}
+	}
 	
-	// TODO 2. 判断文法除过开始符号的非终结符号之间first集合两两不相交
+	// 2. 判断文法除过开始符号的非终结符号之间first集合两两不相交
+	for (auto nonch : nonterminal_set_) {
+		if (nonch != 'S') {
+			for (auto ch : nonterminal_set_) {
+				// 不检测开始符号、跳过自身
+				if (ch != 'S' && nonch != ch) {
+					// 比较当前两个非终结符的first集是否存在交集
+					std::set<char> &first_set1 = first_map_[nonch];
+					std::set<char> &first_set2 = first_map_[ch];
+					for (auto c : first_set1) {
+						if (first_set2.find(c) != first_set2.end()) {
+							throw std::runtime_error("非终结符first集存在交集，"
+									"当前处理文法不是LL1文法，无法继续处理!");
+						}
+					}
+				}
+			}
+		}
+	}
 
-	// TODO 3. 判断文法某个非终结符的select集(候选首符集)存在空时，该终结符的first集和follow集不相交
-	
-	return true;
+	// 3. 判断文法某个非终结符的select集(候选首符集)存在空时，该非终结符的first集和follow集不相交
+	// 求所有非终结字符的select集
+	analyse_symbol_select();
+
+	for (auto &nonpair : nonterminal_select_) {
+		for (auto ch : nonpair.second) {
+			// 某个候选首符集中出现空集
+			if (ch == '^') {
+				// 检测该非终结符的first集和follow集是否存在交集
+				std::set<char> &first_set = first_map_[nonpair.first];
+				std::set<char> &follow_set = follow_map_[nonpair.first];
+				for (auto c : first_set) {
+					if (follow_set.find(c) != follow_set.end()) {
+						throw std::runtime_error("候选首符集存在空的非终结符first集和follow集存在交集，"
+								"当前处理文法不是LL1文法，无法继续处理!");
+					}
+				}
+			}
+		}
+	}
 }
 
 /// 构建预测分析表
@@ -350,6 +407,7 @@ void LL1::output_all_intermediate_data()
 	output_all_symbol();
 	output_all_sentence();
 	output_frist_follow_set();
+	output_select();
 	output_analusis_table();
 }
 
@@ -421,6 +479,20 @@ void LL1::output_frist_follow_set()
 		std::cout << "Follow(" << idx.first << ") : ";
 		for (auto &char_set : idx.second) {
 			std::cout << char_set << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+/// 输出每个非终结符的select集
+void LL1::output_select()
+{
+	std::cout << "非终结符的候选首符集:" << std::endl;
+	for (auto &selepair : nonterminal_select_) {
+		std::cout << selepair.first << " : ";
+		for (auto ch : selepair.second) {
+			std::cout << ch << " ";
 		}
 		std::cout << std::endl;
 	}

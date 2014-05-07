@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
 			ll1.input_grammer_by_file(argv[1]);
 		} catch (std::runtime_error err) {
 			std::cout << err.what() << std::endl;
+			exit(-1);
 		}
 	} else {
 		std::cout << "请逐一输入原始文法(输入EOF结束)：" << std::endl;
@@ -37,7 +38,14 @@ int main(int argc, char *argv[])
 	try {
 		ll1.analyse_grammer();
 	} catch (std::runtime_error err) {
+		ll1.output_input_grammer();
+		ll1.output_fixed_grammer();
+		ll1.output_all_symbol();
+		ll1.output_all_sentence();
+		ll1.output_frist_follow_set();
+		ll1.output_select();
 		std::cout << err.what() << std::endl;
+		exit(-1);
 	}
 
 	ll1.output_all_intermediate_data();

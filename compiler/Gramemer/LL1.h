@@ -58,6 +58,9 @@ public:
 	/// 输出每个非终结符的frist集和follow集
 	void output_frist_follow_set();
 
+	/// 输出每个非终结符的select集
+	void output_select();
+
 	/// 输出预测分析表
 	void output_analusis_table();
 
@@ -85,12 +88,12 @@ private:
 
 	/// 分析某终结符是否能推出空
 	bool is_to_empty(char ch);
-
-	// 求一个元素的候选首符集
-	void get_symbol_select(char ch);
+	
+	// 求非终结符的候选首符集
+	void analyse_symbol_select();
 
 	/// 判断是否为LL1文法
-	bool isLL1();
+	void isLL1();
 
 	/// 构建预测分析表
 	void create_analysis_table();
@@ -104,14 +107,14 @@ private:
 	 */
 	inline bool is_terminal_symbol(char ch);
 	
-	std::vector<std::string> input_grammer_; 	 // 保存原始的文法
-	std::vector<std::string> fixed_grammer_; 	 // 修正后的文法
-	std::set<char> terminal_set_; 			 // 终结符集合
-	std::set<char> nonterminal_set_; 		 // 非终结符集合
-	std::multimap<char, std::string> sentent_; 	 // 非终结符的产生式集
-	std::map<char, std::<char>> nonterminal_select_; // 非终结符的候选首符集
-	std::map<char, std::set<char>> first_map_; 	 // 所有非终结符的first集
-	std::map<char, std::set<char>> follow_map_; 	 // 所有非终结符follow集
+	std::vector<std::string> input_grammer_; 	 	// 保存原始的文法
+	std::vector<std::string> fixed_grammer_; 		// 修正后的文法
+	std::set<char> terminal_set_; 			 	// 终结符集合
+	std::set<char> nonterminal_set_; 		 	// 非终结符集合
+	std::multimap<char, std::string> sentent_; 	 	// 非终结符的产生式集
+	std::map<char, std::set<char>> nonterminal_select_; 	// 非终结符的候选首符集
+	std::map<char, std::set<char>> first_map_; 	 	// 所有非终结符的first集
+	std::map<char, std::set<char>> follow_map_; 	 	// 所有非终结符follow集
 	std::map<char, std::map<char, std::string>> analysis_table_; 	// 预测分析表
 };
 
