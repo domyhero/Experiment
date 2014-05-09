@@ -50,42 +50,110 @@ void LL1::input_grammer_by_file(std::string filename)
 /// 分析处理文法
 void LL1::analyse_grammer()
 {
-	dispose_left_recursion();
-	dispose_public_left_factor();
+	// 解析出终结符和非终结符
 	analse_symbol();
+	
+	// 解析出每个推导式
 	analyse_sentence();
+
+	// 测试并消除左递归
+	dispose_left_recursion();
+
+	// 解析出first集和follow集
 	analyse_first_follow_set();
 	
-	try {
-		isLL1();
-	} catch (std::runtime_error err) {
-		throw err;
-	}
-
+	// 判断是不是LL1文法
+	isLL1();
+	
+	// 构建预测分析表
 	create_analysis_table();
 }
-
-/// 消除文法左递归
-void LL1::dispose_left_recursion()
+	
+/// 返回一个没有使用过的非终结符
+char LL1::get_new_nonterminal()
 {
-	// 拷贝输入文法到修正文法集合
-	for (auto &grammer_str : input_grammer_) {
-		fixed_grammer_.push_back(grammer_str);
+	for (int i = 0; i < FLAG_LENGTH; ++i) {
+		if (nonterminal_flag_[i] == false) {
+			nonterminal_flag_[i] = true;
+			return 'A' + i;
+		}
 	}
 
-	// TODO 判断文法左递归以及消除
+	throw std::runtime_error("没有可用的非终结符了，这是一个悲伤的故事...");
 }
 
-/// 提取公共左因子
-void LL1::dispose_public_left_factor()
+/// 消除一个非终结符的直接左递归
+void LL1::dispose_nonterminal_left_recursion(char nonch)
 {
-	// TODO
+	char new_nonch;
+
+	try {
+		new_nonch = get_new_nonterminal();
+	} catch (std::runtime_error err) {
+		std::cout << err.what() << std::endl;
+		exit(-1);
+	}
+
+	// 遍历这个非终结符的所有产生式
+	auto idx = sentent_.find(nonch);
+	while (idx != sentent_.end() && idx->first == nonch) {
+		// 判断当前推导式是否存在直接左递归
+		if (idx->first == idx->second[0]) {
+			std::string strtmp = idx->second;
+			strtmp.erase(0, 1);
+			strtmp += new_nonch;
+			sentent_.insert(std::make_pair(new_nonch, strtmp));
+			sentent_.insert(std::make_pair(new_nonch, "^"));
+		} else {
+			idx->second += new_nonch;
+		}
+		++idx;
+	}
+	auto del = sentent_.find(nonch);
+	while (del != sentent_.end() && del->first == nonch) {
+		// 判断当前推导式是否存在直接左递归
+		if (del->first == del->second[0]) {
+			sentent_.erase(del);
+		}
+		++del;
+	}
+
+	// 标记该终结符号已被使用
+	nonterminal_flag_[new_nonch-'A'] = true;
+
+	// 加入到终结符集合中
+	nonterminal_set_.insert(new_nonch);
+}
+
+/// 判断一个非终结符是否存在直接左递归
+bool LL1::is_left_recursion(char nonch)
+{
+	auto idx = sentent_.find(nonch);
+	while (idx != sentent_.end() && idx->first == nonch) {
+		// 判断当前推导式是否存在直接左递归
+		if (idx->first == idx->second[0]) {
+			return true;
+		}
+		++idx;
+	}
+	
+	return false;
+}	
+
+/// 消除文法的直接左递归
+void LL1::dispose_left_recursion()
+{
+	for (char nonch : nonterminal_set_) {
+		if (is_left_recursion(nonch)) {
+			dispose_nonterminal_left_recursion(nonch);
+		}
+	}
 }
 
 /// 分析生成终结符和非终结符集合
 void LL1::analse_symbol()
 {
-	for (auto &grammer_str : fixed_grammer_) {
+	for (auto &grammer_str : input_grammer_) {
 		for (auto &ch : grammer_str) {
 			if (ch == '=' || ch == '|') {
 				continue;
@@ -96,6 +164,8 @@ void LL1::analse_symbol()
 				}
 			} else {
 				nonterminal_set_.insert(ch);
+				// 标示出已经被使用过的非终结符
+				nonterminal_flag_[ch-'A'] = true;
 			}
 		}
 	}
@@ -104,7 +174,7 @@ void LL1::analse_symbol()
 /// 分析拆分出非终结符对应的产生式
 void LL1::analyse_sentence()
 {
-	for (auto sen : fixed_grammer_) {
+	for (auto sen : input_grammer_) {
 		std::string::size_type i = sen.find("=");
 		while (i != std::string::npos) {
 			++i;	
@@ -138,17 +208,19 @@ void LL1::get_symbol_first(char ch, std::set<char> &first_set)
 	auto idx = sentent_.find(ch);
 	while (idx != sentent_.end() && idx->first == ch) {
 		std::string sen(idx->second);
-		for (int i = 0; i < sen.size(); ++i) {
-			// 如果第一个字符是终结符则直接加入
-			if (is_terminal_symbol(sen[i])) {
-				first_set.insert(sen[i]);
-			} else {
-				/// 非终结符则递归求其first集
+		// 如果第一个字符是终结符则直接加入
+		if (is_terminal_symbol(sen[0])) {
+			first_set.insert(sen[0]);
+		} else {
+			for (int i = 0; i < sen.size(); ++i) {
+				// 非终结符则递归求其first集
 				get_symbol_first(sen[i], first_set);
-				// 当前终结符不能推导出空则结束当前推导
-				if (!is_to_empty(sen[i])) {
+
+				// 当前是终结符或是非终结符但不能推导出空则结束
+				if (is_terminal_symbol(sen[i]) || !is_to_empty(sen[i])) {
 					break;
 				}
+
 				// 最后一个符号依然含有空，则first集加入空
 				if (i + 1 == sen.size()) {
 					first_set.insert('^');
@@ -175,9 +247,9 @@ void LL1::get_symbol_follow(char ch, std::set<char> &follow_set)
 				} else {
 					// 如果是非终结符，则把该终结符的first集合中的非空加入
 					// 这要求必须先求first集合，再求follow集合
-					for (auto ch : first_map_[sen[i+1]]) {
-						if (ch != '^') {
-							follow_set.insert(ch);
+					for (auto c : first_map_[sen[i+1]]) {
+						if (c != '^') {
+							follow_set.insert(c);
 						}
 					}
 					// 判断之后终结符能否推出空
@@ -189,12 +261,13 @@ void LL1::get_symbol_follow(char ch, std::set<char> &follow_set)
 					get_symbol_follow(sen_pair.first, follow_set);
 				}
 			}
-			// 如果当前非终结符位于最后
-			if (ch == sen[i] && i == sen.size()-1) {
+			// 如果当前非终结符位于最后且不是右递归
+			if (ch == sen[i] && i == sen.size()-1 && ch != sen_pair.first) {
 				get_symbol_follow(sen_pair.first, follow_set);
 			}
 		}
 	}
+
 	// 开始符号要加入#
 	if (ch == 'S') {
 		follow_set.insert('#');
@@ -213,24 +286,6 @@ bool LL1::is_to_empty(char ch)
 	}
 	
 	return false;
-}
-
-// 求非终结符的候选首符集
-void LL1::analyse_symbol_select()
-{
-	for (auto ch : nonterminal_set_) {
-		auto idx = sentent_.find(ch);
-		while (idx != sentent_.end() && idx->first == ch) {
-			for (auto nonch : idx->second) {
-				if (!is_terminal_symbol(nonch)) {
-					for (auto c : first_map_[nonch]) {
-						nonterminal_select_[nonch].insert(c);
-					}
-				}
-			}
-			++idx;
-		}
-	}
 }
 
 /// 判断是否为LL1文法
@@ -252,38 +307,58 @@ void LL1::isLL1()
 			}
 		}
 	}
-	
-	// 2. 判断文法除过开始符号的非终结符号之间first集合两两不相交
-	for (auto nonch : nonterminal_set_) {
-		if (nonch != 'S') {
-			for (auto ch : nonterminal_set_) {
-				// 不检测开始符号、跳过自身
-				if (ch != 'S' && nonch != ch) {
-					// 比较当前两个非终结符的first集是否存在交集
-					std::set<char> &first_set1 = first_map_[nonch];
-					std::set<char> &first_set2 = first_map_[ch];
-					for (auto c : first_set1) {
-						if (first_set2.find(c) != first_set2.end()) {
-							throw std::runtime_error("非终结符first集存在交集，"
-									"当前处理文法不是LL1文法，无法继续处理!");
+
+	// 2. 判断文法的候选首符集没有相交
+	for (auto nonch1 : nonterminal_set_) {
+		auto idx1 = sentent_.find(nonch1);
+		while (idx1 != sentent_.end() && idx1->first == nonch1) {
+			for (auto nonch2 : nonterminal_set_) {
+				auto idx2 = sentent_.find(nonch2);
+				while (idx2 != sentent_.end() && idx2->first == nonch2) {
+					if (idx1->first == idx2->first && idx1->second != idx2->second) {
+						if (!is_terminal_symbol(idx1->second[0]) && !is_terminal_symbol(idx2->second[0])) {
+							// 比较当前两个非终结符的候选首符集是否存在交集
+							std::set<char> &first_set1 = first_map_[idx1->second[0]];
+							std::set<char> &first_set2 = first_map_[idx2->second[0]];
+							for (auto c : first_set1) {
+								if (first_set2.find(c) != first_set2.end()) {
+									throw std::runtime_error("非终结符候选首符集存在交集，"
+												"当前处理文法不是LL1文法，无法继续处理!");
+								}
+							}
+						} else if (!is_terminal_symbol(idx1->second[0])) {
+							std::set<char> &first_set1 = first_map_[idx1->second[0]];
+							if (first_set1.find(idx2->second[0]) != first_set1.end()) {
+								throw std::runtime_error("非终结符候选首符集存在交集，"
+											"当前处理文法不是LL1文法，无法继续处理!");
+							}
+						} else if (!is_terminal_symbol(idx2->second[0])) {
+							std::set<char> &first_set2 = first_map_[idx2->second[1]];
+							if (first_set2.find(idx1->second[0]) != first_set2.end()) {
+								throw std::runtime_error("非终结符候选首符集存在交集，"
+											"当前处理文法不是LL1文法，无法继续处理!");
+							}
+						} else {
+							if (idx1->second[0] == idx2->second[0]) {
+								throw std::runtime_error("非终结符候选首符集存在交集，"
+											"当前处理文法不是LL1文法，无法继续处理!");
+							}
 						}
 					}
+					++idx2;
 				}
 			}
+			++idx1;
 		}
 	}
 
-	// 3. 判断文法某个非终结符的select集(候选首符集)存在空时，该非终结符的first集和follow集不相交
-	// 求所有非终结字符的select集
-	analyse_symbol_select();
-
-	for (auto &nonpair : nonterminal_select_) {
-		for (auto ch : nonpair.second) {
-			// 某个候选首符集中出现空集
-			if (ch == '^') {
-				// 检测该非终结符的first集和follow集是否存在交集
-				std::set<char> &first_set = first_map_[nonpair.first];
-				std::set<char> &follow_set = follow_map_[nonpair.first];
+	// 3. 判断文法某个非终结符的候选首符集存在空时，该非终结符的first集和follow集不相交
+	for (auto nonch : nonterminal_set_) {
+		auto idx = sentent_.find(nonch);
+		while (idx != sentent_.end() && idx->first == nonch) {
+			if (idx->second == "^") {
+				std::set<char> &first_set = first_map_[idx->first];
+				std::set<char> &follow_set = follow_map_[idx->first];
 				for (auto c : first_set) {
 					if (follow_set.find(c) != follow_set.end()) {
 						throw std::runtime_error("候选首符集存在空的非终结符first集和follow集存在交集，"
@@ -291,6 +366,7 @@ void LL1::isLL1()
 					}
 				}
 			}
+			idx++;
 		}
 	}
 }
@@ -375,10 +451,10 @@ bool LL1::analyse_sentence(std::string sentence)
 					symb_stack.push_back(product[i]);
 				}
 			}
-			output_analyse_step(step++, symb_stack, sentence, std::string("") + nonch + " = " + product);
+			output_analyse_step(step++, symb_stack, sentence, std::string("") + nonch + " -> " + product);
 		} else {
 			std::cout << "找不到 " << nonch << " 面临输入 " << sentence[0] 
-				<< " 时的对应产生式!\n" << BLANK << "\n" << std::endl;
+					<< " 时的对应产生式!\n" << BLANK << "\n" << std::endl;
 			return false;
 		}
 	}
@@ -410,11 +486,9 @@ void LL1::output_analyse_step(int step, std::vector<char> &symb_stack, std::stri
 void LL1::output_all_intermediate_data()
 {
 	output_input_grammer();
-	output_fixed_grammer();
 	output_all_symbol();
 	output_all_sentence();
 	output_frist_follow_set();
-	output_select();
 	output_analusis_table();
 }
 
@@ -424,16 +498,6 @@ void LL1::output_input_grammer()
 	std::cout << "原始文法:" << std::endl;
 	for (auto &str : input_grammer_) {
 		std::cout << str << std::endl;
-	}
-	std::cout << std::endl;
-}
-
-/// 输出修正后的文法
-void LL1::output_fixed_grammer()
-{
-	std::cout << "修正后文法:" << std::endl;
-	for (auto &idx : fixed_grammer_) {
-		std::cout << idx << std::endl;
 	}
 	std::cout << std::endl;
 }
@@ -492,20 +556,6 @@ void LL1::output_frist_follow_set()
 	std::cout << std::endl;
 }
 
-/// 输出每个非终结符的select集
-void LL1::output_select()
-{
-	std::cout << "非终结符的候选首符集:" << std::endl;
-	for (auto &selepair : nonterminal_select_) {
-		std::cout << selepair.first << " : ";
-		for (auto ch : selepair.second) {
-			std::cout << ch << " ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;
-}
-
 /// 输出预测分析表
 void LL1::output_analusis_table()
 { 	
@@ -530,7 +580,7 @@ void LL1::output_analusis_table()
 		std::cout << "  " << nonmap.first << "  |    "; 
 		for (auto ch : terminal_set_) {
 			std::cout << std::left << std::setw(12) 
-				<< std::string("") + nonmap.first + " = "  + nonmap.second[ch];
+				<< std::string("") + nonmap.first + " -> " + nonmap.second[ch];
 		}
 		std::cout << std::endl;
 	}

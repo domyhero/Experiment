@@ -46,9 +46,6 @@ public:
 	/// 输出原始文法
 	void output_input_grammer();
 	
-	/// 输出修正后的文法
-	void output_fixed_grammer();
-
 	/// 输出所有的终结符和非终结符
 	void output_all_symbol();
 	
@@ -58,18 +55,21 @@ public:
 	/// 输出每个非终结符的frist集和follow集
 	void output_frist_follow_set();
 
-	/// 输出每个非终结符的select集
-	void output_select();
-
 	/// 输出预测分析表
 	void output_analusis_table();
 
 private:
-	/// 消除文法左递归
-	void dispose_left_recursion();
+	/// 返回一个没有使用过的非终结符
+	char get_new_nonterminal();
+	
+	/// 判断一个非终结符是否存在直接左递归
+	bool is_left_recursion(char nonch);
 
-	/// 提取公共左因子
-	void dispose_public_left_factor();
+	/// 消除一个非终结符的直接左递归
+	void dispose_nonterminal_left_recursion(char nonch);
+
+	/// 消除文法的直接左递归
+	void dispose_left_recursion();
 
 	/// 分析生成终结符和非终结符集合
 	void analse_symbol();
@@ -89,9 +89,6 @@ private:
 	/// 分析某终结符是否能推出空
 	bool is_to_empty(char ch);
 	
-	// 求非终结符的候选首符集
-	void analyse_symbol_select();
-
 	/// 判断是否为LL1文法
 	void isLL1();
 
@@ -107,12 +104,12 @@ private:
 	 */
 	inline bool is_terminal_symbol(char ch);
 	
+	#define FLAG_LENGTH 26
+	bool nonterminal_flag_[FLAG_LENGTH] = {false}; 		// 已使用非终结符的标记数组
 	std::vector<std::string> input_grammer_; 	 	// 保存原始的文法
-	std::vector<std::string> fixed_grammer_; 		// 修正后的文法
 	std::set<char> terminal_set_; 			 	// 终结符集合
 	std::set<char> nonterminal_set_; 		 	// 非终结符集合
 	std::multimap<char, std::string> sentent_; 	 	// 非终结符的产生式集
-	std::map<char, std::set<char>> nonterminal_select_; 	// 非终结符的候选首符集
 	std::map<char, std::set<char>> first_map_; 	 	// 所有非终结符的first集
 	std::map<char, std::set<char>> follow_map_; 	 	// 所有非终结符follow集
 	std::map<char, std::map<char, std::string>> analysis_table_; 	// 预测分析表

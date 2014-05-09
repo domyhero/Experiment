@@ -39,11 +39,9 @@ int main(int argc, char *argv[])
 		ll1.analyse_grammer();
 	} catch (std::runtime_error err) {
 		ll1.output_input_grammer();
-		ll1.output_fixed_grammer();
 		ll1.output_all_symbol();
 		ll1.output_all_sentence();
 		ll1.output_frist_follow_set();
-		ll1.output_select();
 		std::cout << err.what() << std::endl;
 		exit(-1);
 	}
