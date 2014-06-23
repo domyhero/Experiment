@@ -175,9 +175,9 @@ void LL1::analse_symbol()
 void LL1::analyse_sentence()
 {
 	for (auto sen : input_grammer_) {
-		std::string::size_type i = sen.find("=");
+		std::string::size_type i = sen.find(">");
 		while (i != std::string::npos) {
-			++i;	
+			i++;	
 			std::string::size_type j = sen.find("|", i);
 			if (j != std::string::npos) {
 				sentent_.insert(make_pair(sen[0], sen.substr(i, j-i)));
@@ -525,7 +525,7 @@ void LL1::output_all_sentence()
 		auto idx = sentent_.find(nonch);
 		assert(idx != sentent_.end());
 		while (idx != sentent_.end() && idx->first == nonch) {
-			std::cout << idx->first << " = " << idx->second << std::endl;
+			std::cout << idx->first << " -> " << idx->second << std::endl;
 			++idx;
 		}
 	}

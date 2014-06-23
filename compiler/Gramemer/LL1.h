@@ -105,13 +105,13 @@ private:
 	inline bool is_terminal_symbol(char ch);
 	
 	#define FLAG_LENGTH 26
-	bool nonterminal_flag_[FLAG_LENGTH] = {false}; 		// 已使用非终结符的标记数组
-	std::vector<std::string> input_grammer_; 	 	// 保存原始的文法
-	std::set<char> terminal_set_; 			 	// 终结符集合
-	std::set<char> nonterminal_set_; 		 	// 非终结符集合
-	std::multimap<char, std::string> sentent_; 	 	// 非终结符的产生式集
-	std::map<char, std::set<char>> first_map_; 	 	// 所有非终结符的first集
-	std::map<char, std::set<char>> follow_map_; 	 	// 所有非终结符follow集
+	bool nonterminal_flag_[FLAG_LENGTH] = {false}; 	// 已使用非终结符的标记数组
+	std::vector<std::string> input_grammer_; 	// 保存原始的文法
+	std::set<char> terminal_set_; 			// 终结符集合
+	std::set<char> nonterminal_set_; 		// 非终结符集合
+	std::multimap<char, std::string> sentent_; 	// 非终结符的产生式集
+	std::map<char, std::set<char>> first_map_; 	// 所有非终结符的first集
+	std::map<char, std::set<char>> follow_map_; 	// 所有非终结符follow集
 	std::map<char, std::map<char, std::string>> analysis_table_; 	// 预测分析表
 };
 
