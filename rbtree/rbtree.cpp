@@ -17,43 +17,103 @@
 #ifndef RBTREE_H_
 #define RBTREE_H_
 
-enum color_t {
-	black,
-	red
-};
+#include <iostream>
 
-template <typename Type>
-struct RBNode {
-	Type key;
-	RBNode *left;
-	RBNode *right;
-	RBNode *parent;
-	color_t color;
-};
-
-template <typename Type>
 class RBTree {
+private:
+	enum color_t {red, black};
+
+	struct RBNode {
+		int key;
+		RBNode *left;
+		RBNode *right;
+		RBNode *parent;
+		color_t color;
+	};
+	
+	RBNode root_;
+	int count_;
+
 public:
-	RBTree();
+	RBTree(int key);
 	~RBTree();
 
-	insert(T key);
-	remove(T key);
+	bool find(int key);
+	void insert(int key);
+	bool remove(int key);
+	int count() const;
+	bool empty();
 
 private:
-	RBNode<Type> root;
+	void destory(RBNode *node);
 };
 
-template <typename Type>
-RBTree<Type>::RBTree()
+RBTree::RBTree(int key) : count_(1)
+{
+	root_.key = key;
+	root_.left = NULL;
+	root_.right = NULL;
+	root_.parent = NULL;
+	root_.color = black;
+}
+
+RBTree::~RBTree()
+{
+	destory(root_.left);
+	destory(root_.right);
+}
+
+bool RBTree::find(int key)
+{
+	RBNode *node = &root_;
+
+	while (node) {
+		if (key < node->key) {
+			node = node->left;
+		} else if (key > node->key) {
+			node = node->right;
+		} else {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void RBTree::insert(int key)
 {
 	
 }
 
-template <typename Type>
-RBTree<Type>::~RBTree()
+bool RBTree::remove(int key)
 {
-	// TODO
+	return true;
+}
+
+int RBTree::count() const
+{
+	return count_;
+}
+
+bool RBTree::empty()
+{
+	return (count_ == 0);
+}
+
+void RBTree::destory(RBNode *node)
+{
+	if (node) {
+		destory(node->left);
+		destory(node->right);
+		delete node;
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	RBTree rbtree(0);
+
+	return 0;
 }
 
 #endif 	// RBTREE_H_
