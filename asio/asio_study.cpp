@@ -1,8 +1,8 @@
 // =====================================================================================
-// 
+//
 //       Filename:  asio_study.cpp
 //
-//    Description:  
+//    Description:
 //
 //        Version:  1.0
 //        Created:  2014年07月27日 20时39分16秒
@@ -11,7 +11,7 @@
 //
 //         Author:  Hurley (LiuHuan), liuhuan1992@gmail.com
 //        Company:  Class 1107 of Computer Science and Technology
-// 
+//
 // =====================================================================================
 
 #include <iostream>
@@ -27,10 +27,10 @@ using ip::tcp;
 class HelloService
 {
 public:
-	HelloService(io_service &iosev, int listen_port) 
+	HelloService(io_service &iosev, int listen_port)
 		: iosev_(iosev), acceptor_(iosev, tcp::endpoint(tcp::v4(), listen_port))
 	{
-	}
+    }
 
 	void start()
 	{
