@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	char event_buf[1024];
 
 	while (1) {
-		int readn =  read(handle, event_buf, 1024);
+		int readn = read(handle, event_buf, 1024);
 		if (readn == 0) {
 			perror("read() return 0");
 			return -1;
