@@ -22,9 +22,8 @@ _start:
 
 ; 编译链接方法：
 ; nasm -f elf -o hello.o hello.s
-; ld hello.o -o hello
+; ld -m elf_i386 hello.o -o hello
 
 ; Linux会有6个寄存器可被用来传递系统调用参数：
 ; eax (存放系统调用号)、 ebx、ecx、edx、esi及edi来存放这些额外的参数（以字母递增的顺序）。
-
 
